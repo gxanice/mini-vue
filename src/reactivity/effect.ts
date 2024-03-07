@@ -1,6 +1,8 @@
 // 引入一个辅助函数`extend`，用于合并对象
 import { extend } from "../shared";
 
+let activeEffect; // 当前激活的效果
+let shouldTrack; // 是否应该追踪依赖
 // 定义响应式效果的类
 class ReactiveEffect {
   private _fn: any; // 被封装的原始函数
@@ -16,12 +18,19 @@ class ReactiveEffect {
 
   // 执行封装的函数，并设置当前激活的效果为此实例
   run() {
+    if (!this.isActive) {
+      return this._fn()
+    }
+
+    shouldTrack = true
     activeEffect = this;
+
     return this._fn(); // 执行函数
   }
 
   // 停止此效果的响应式监听
   stop() {
+    shouldTrack = false; // 关闭追踪
     if (this.isActive) {
       // 防止多次停止
       cleanupEffect(this); // 清除此效果的所有依赖
@@ -44,6 +53,8 @@ const targetMap = new Map();
 // 追踪依赖，即将当前效果添加到目标对象属性的依赖集合中
 export function track(target, key) {
   if (!activeEffect) return; // 如果没有激活的效果，则直接返回
+  if (!shouldTrack) return
+  
   let depsMap = targetMap.get(target);
   if (!depsMap) {
     depsMap = new Map();
@@ -76,8 +87,6 @@ export function trigger(target, key) {
     }
   });
 }
-
-let activeEffect; // 当前激活的效果
 
 // 创建一个响应式效果
 export function effect(fn: any, option: any = {}) {
