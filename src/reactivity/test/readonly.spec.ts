@@ -1,7 +1,7 @@
-import { isReadonly, readonly } from "../reactive";
+import { isReadonly, readonly,isProxy } from '../reactive';
 
 describe("readonly", () => {
-  it("happy path", () => {
+  it("should make nested values readonly", () => {
     const original = {
       foo: 1,
       bar: { baz: 2 },
@@ -12,6 +12,9 @@ describe("readonly", () => {
 
     expect(isReadonly(wrapped)).toBe(true);
     expect(isReadonly(original)).toBe(false);
+    expect(isReadonly(wrapped.bar)).toBe(true);
+    expect(isReadonly(original.bar)).toBe(false);
+    expect(isProxy(wrapped)).toBe(true);
   });
 
   it("warn then call set", () => {

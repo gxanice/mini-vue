@@ -3,6 +3,7 @@ import { extend } from "../shared";
 
 let activeEffect; // 当前激活的效果
 let shouldTrack; // 是否应该追踪依赖
+
 // 定义响应式效果的类
 class ReactiveEffect {
   private _fn: any; // 被封装的原始函数
@@ -19,10 +20,10 @@ class ReactiveEffect {
   // 执行封装的函数，并设置当前激活的效果为此实例
   run() {
     if (!this.isActive) {
-      return this._fn()
+      return this._fn();
     }
 
-    shouldTrack = true
+    shouldTrack = true;
     activeEffect = this;
 
     return this._fn(); // 执行函数
@@ -52,9 +53,8 @@ const targetMap = new Map();
 
 // 追踪依赖，即将当前效果添加到目标对象属性的依赖集合中
 export function track(target, key) {
-  if (!activeEffect) return; // 如果没有激活的效果，则直接返回
-  if (!shouldTrack) return
-  
+  if (!isTracking()) return
+
   let depsMap = targetMap.get(target);
   if (!depsMap) {
     depsMap = new Map();
@@ -67,8 +67,19 @@ export function track(target, key) {
     depsMap.set(key, dep);
   }
 
-  dep.add(activeEffect); // 将当前激活的效果添加到依赖集合
-  activeEffect.deps.push(dep); // 同时将此依赖集合添加到效果的依赖列表，用于后续清理
+  trackEffect(dep); // 将当前激活的效果添加到依赖集合
+}
+
+export function trackEffect(dep: any) {
+  if (!dep.has(activeEffect)) {
+    dep.add(activeEffect); // 将当前激活的效果添加到依赖集合
+    activeEffect.deps.push(dep); // 同时将此依赖集合添加到效果的依赖列表，用于后续清理
+  }
+}
+
+// 判断是否正在追踪依赖
+export function isTracking() { 
+  return shouldTrack && activeEffect !== undefined;
 }
 
 // 触发更新，即当目标对象的属性值改变时，执行所有依赖于此属性的效果
@@ -78,6 +89,10 @@ export function trigger(target, key) {
   let dep = depsMap.get(key);
   if (!dep) return;
 
+  triggerEffect(dep); // 执行所有依赖此属性的效果
+}
+
+export function triggerEffect(dep: any) {
   dep.forEach((effect) => {
     // 遍历依赖此属性的所有效果
     if (effect.scheduler) {
