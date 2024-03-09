@@ -5,7 +5,7 @@ let activeEffect; // 当前激活的效果
 let shouldTrack; // 是否应该追踪依赖
 
 // 定义响应式效果的类
-class ReactiveEffect {
+export class ReactiveEffect {
   private _fn: any; // 被封装的原始函数
   public scheduler: Function | undefined; // 可选的调度器函数，用于控制何时触发效果
   deps: any[] = []; // 此效果依赖的所有属性集合
