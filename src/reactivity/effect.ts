@@ -1,7 +1,7 @@
 // 引入一个辅助函数`extend`，用于合并对象
-import { extend } from "../shared";
+import { extend } from "../shared/index";
 
-let activeEffect; // 当前激活的效果
+let activeEffect; // 当前实例对象
 let shouldTrack; // 是否应该追踪依赖
 
 // 定义响应式效果的类
@@ -12,7 +12,7 @@ export class ReactiveEffect {
   isActive = true; // 标记此效果是否活跃（即是否在监听变化）
   onStop?: () => void; // 当停止效果时调用的回调函数
 
-  constructor(fn, scheduler?: Function) {
+  constructor(fn: any, scheduler?: Function) {
     this._fn = fn; // 初始化时，保存传入的函数
     this.scheduler = scheduler; // 保存可选的调度器
   }
@@ -46,6 +46,7 @@ export class ReactiveEffect {
 // 清除一个效果的所有依赖
 function cleanupEffect(effect: ReactiveEffect) {
   effect.deps.forEach((dep: any) => dep.delete(effect)); // 从每个依赖的集合中移除此效果
+  effect.deps.length = 0;
 }
 
 // 全局的目标映射，用于存储每个对象及其属性的依赖关系
@@ -53,7 +54,7 @@ const targetMap = new Map();
 
 // 追踪依赖，即将当前效果添加到目标对象属性的依赖集合中
 export function track(target, key) {
-  if (!isTracking()) return
+  if (!isTracking()) return;
 
   let depsMap = targetMap.get(target);
   if (!depsMap) {
@@ -78,7 +79,7 @@ export function trackEffect(dep: any) {
 }
 
 // 判断是否正在追踪依赖
-export function isTracking() { 
+export function isTracking() {
   return shouldTrack && activeEffect !== undefined;
 }
 
