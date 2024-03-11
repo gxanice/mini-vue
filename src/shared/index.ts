@@ -11,3 +11,8 @@ export const hasChange = (val: any, newVal: any) => {
     // 如果两个值相等，则不需要改变，故取反
     return !Object.is(val, newVal)
 }
+
+// 判断对象是否有某个属性
+export const hasOwn = (target: any, key: any) => {
+  return Object.prototype.hasOwnProperty.call(target, key);
+}

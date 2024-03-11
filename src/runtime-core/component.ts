@@ -1,5 +1,7 @@
-import { pubilcInstanceProxyHandlers } from "./ccomponentPublicInstance";
-import { render } from "./renderer";
+import { pubilcInstanceProxyHandlers } from "./componentPublicInstance";
+import { initProps } from "./componentProps";
+import { shallowReadonly } from "../reactivity/reactive";
+
 
 // 创建组件实例
 export function createComponentInstance(vnode: any) {
@@ -8,6 +10,7 @@ export function createComponentInstance(vnode: any) {
     vnode, // 组件的虚拟节点
     type: vnode.type, // 组件的类型（可以是组件选项对象）
     setupState: {},
+    props: {}, // 组件的props
   };
 
   return component; // 返回创建的组件实例
@@ -16,7 +19,7 @@ export function createComponentInstance(vnode: any) {
 // 设置组件实例，包括初始化props、slots等，以及调用setup函数
 export function setupComponent(instance: any) {
   // TODO
-  // initProps()
+  initProps(instance,instance.vnode.props)
   // initSlots()
 
   // 初始化有状态组件
@@ -38,7 +41,7 @@ function setupStatefulComponent(instance: any) {
   );
 
   if (setup) {
-    const setupResult = setup();
+    const setupResult = setup(shallowReadonly(instance.props));
 
     // 处理setup函数的返回结果
     handleSetupResult(instance, setupResult);

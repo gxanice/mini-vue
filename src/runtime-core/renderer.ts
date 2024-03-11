@@ -1,5 +1,5 @@
-import { isObject } from "../shared/index";
 import { createComponentInstance, setupComponent } from "./component";
+import { ShapeFlags } from "../shared/ShapeFlags";
 
 export function render(vnode, container) {
   patch(vnode, container);
@@ -7,11 +7,12 @@ export function render(vnode, container) {
 
 function patch(vnode, container) {
   // 处理组件
-  // TODO 判断vnode是不是一个element
+  // 标识判断是什么类型的节点
 
-  if (typeof vnode.type === "string") {
+  const { shapeFlag } = vnode;
+  if (shapeFlag & ShapeFlags.ELEMENT) {
     processElement(vnode, container);
-  } else if (isObject(vnode.type)) {
+  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
     processComponent(vnode, container);
   }
 }
@@ -23,11 +24,13 @@ function processElement(vnode: any, container: any) {
 function mountElement(vnode: any, container: any) {
   const el = (vnode.el = document.createElement(vnode.type));
 
-  const { children } = vnode;
+  const { children, shapeFlag } = vnode;
   // 传来的可能是数组
-  if (typeof children === "string") {
+  if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    // text_children
     el.textContent = children;
-  } else if (Array.isArray(children)) {
+  } else if (ShapeFlags.ARRAY_CHILDREN) {
+    // array_children
     mountChildren(children, el);
   }
 
@@ -35,6 +38,12 @@ function mountElement(vnode: any, container: any) {
   const { props } = vnode;
   for (let key in props) {
     const val = props[key];
+    // 判断是否是事件
+    const isOn = (key: string) => /^on[A-Z]/.test(key);
+    if (isOn(key)) {
+      const event = key.slice(2).toLowerCase();
+      el.addEventListener(event, val);
+    }
     el.setAttribute(key, val);
   }
 
