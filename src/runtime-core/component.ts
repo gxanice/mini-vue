@@ -1,7 +1,8 @@
 import { pubilcInstanceProxyHandlers } from "./componentPublicInstance";
 import { initProps } from "./componentProps";
+import { initSlots } from "./componentSlots";
 import { shallowReadonly } from "../reactivity/reactive";
-
+import { emit } from "./componentEmit";
 
 // 创建组件实例
 export function createComponentInstance(vnode: any) {
@@ -11,16 +12,19 @@ export function createComponentInstance(vnode: any) {
     type: vnode.type, // 组件的类型（可以是组件选项对象）
     setupState: {},
     props: {}, // 组件的props
+    slots: {}, // 组件的插槽
+    emit: () => {}, // 传递的函数
   };
 
+  component.emit = emit.bind(null, component) as any; // 将emit函数绑定到组件实例上
   return component; // 返回创建的组件实例
 }
 
 // 设置组件实例，包括初始化props、slots等，以及调用setup函数
 export function setupComponent(instance: any) {
-  // TODO
-  initProps(instance,instance.vnode.props)
-  // initSlots()
+  // 初始化props与slots
+  initProps(instance, instance.vnode.props);
+  initSlots(instance, instance.vnode.children);
 
   // 初始化有状态组件
   setupStatefulComponent(instance);
@@ -41,7 +45,9 @@ function setupStatefulComponent(instance: any) {
   );
 
   if (setup) {
-    const setupResult = setup(shallowReadonly(instance.props));
+    const setupResult = setup(shallowReadonly(instance.props), {
+      emit: instance.emit, // 将emit函数传递给setup函数
+    });
 
     // 处理setup函数的返回结果
     handleSetupResult(instance, setupResult);
