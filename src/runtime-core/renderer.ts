@@ -7,6 +7,7 @@ export function render(vnode, container) {
 }
 
 function patch(vnode: any, container: any) {
+  // debugger
   // 处理组件
   // 标识判断是什么类型的节点
   // Fragment 只渲染children
@@ -31,13 +32,14 @@ function patch(vnode: any, container: any) {
 }
 
 function processFragment(vnode: any, container: any) {
-  mountChildren(vnode, container);
+  const { children } = vnode;
+  mountChildren(children, container);
 }
 
-export function processText(vnode: any, container: any) {
-  const {children } = vnode
-  const textNode = (vnode.el = document.createTextNode(children))
-  container.append(textNode)
+function processText(vnode: any, container: any) {
+  const { children } = vnode;
+  const textNode = (vnode.el = document.createTextNode(children));
+  container.append(textNode);
 }
 
 function processElement(vnode: any, container: any) {
@@ -74,7 +76,7 @@ function mountElement(vnode: any, container: any) {
 }
 
 function mountChildren(vnode: any, container: any) {
-  vnode.children.forEach((child) => {
+  vnode.forEach((child) => {
     patch(child, container);
   });
 }
