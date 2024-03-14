@@ -45,9 +45,12 @@ function setupStatefulComponent(instance: any) {
   );
 
   if (setup) {
+    setCurrentInstance(instance); // 设置当前组件实例
     const setupResult = setup(shallowReadonly(instance.props), {
       emit: instance.emit, // 将emit函数传递给setup函数
     });
+
+    setCurrentInstance(null); // 清空当前组件实例
 
     // 处理setup函数的返回结果
     handleSetupResult(instance, setupResult);
@@ -73,4 +76,13 @@ function finishComponentSetup(instance: any) {
   // 如果组件选项中提供了render函数，则将其赋值给实例的render属性
   // 这样，后续渲染过程中就可以调用这个render函数来生成虚拟DOM
   instance.render = component.render;
+}
+
+let currentInstance: any = null;
+export function getCurrentInstance() {
+  return currentInstance;
+}
+
+export function setCurrentInstance(instance: any) {
+  currentInstance = instance;
 }
