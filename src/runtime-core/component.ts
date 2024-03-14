@@ -5,7 +5,7 @@ import { shallowReadonly } from "../reactivity/reactive";
 import { emit } from "./componentEmit";
 
 // 创建组件实例
-export function createComponentInstance(vnode: any) {
+export function createComponentInstance(vnode: any, parent: any) {
   // 根据虚拟节点（vnode）创建一个组件实例对象
   const component = {
     vnode, // 组件的虚拟节点
@@ -13,6 +13,8 @@ export function createComponentInstance(vnode: any) {
     setupState: {},
     props: {}, // 组件的props
     slots: {}, // 组件的插槽
+    provides: parent ? parent.provides : {}, // 组件提供的数据
+    parent,
     emit: () => {}, // 传递的函数
   };
 

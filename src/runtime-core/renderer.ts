@@ -3,10 +3,10 @@ import { ShapeFlags } from "../shared/ShapeFlags";
 import { Fragment, Text } from "./vnode";
 
 export function render(vnode, container) {
-  patch(vnode, container);
+  patch(vnode, container, null);
 }
 
-function patch(vnode: any, container: any) {
+function patch(vnode: any, container: any, parentComponent: any) {
   // debugger
   // 处理组件
   // 标识判断是什么类型的节点
@@ -15,7 +15,7 @@ function patch(vnode: any, container: any) {
 
   switch (type) {
     case Fragment:
-      processFragment(vnode, container);
+      processFragment(vnode, container, parentComponent);
       break;
     case Text:
       processText(vnode, container);
@@ -23,17 +23,17 @@ function patch(vnode: any, container: any) {
 
     default:
       if (shapeFlag & ShapeFlags.ELEMENT) {
-        processElement(vnode, container);
+        processElement(vnode, container, parentComponent);
       } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        processComponent(vnode, container);
+        processComponent(vnode, container, parentComponent);
       }
       break;
   }
 }
 
-function processFragment(vnode: any, container: any) {
+function processFragment(vnode: any, container: any, parentComponent: any) {
   const { children } = vnode;
-  mountChildren(children, container);
+  mountChildren(children, container, parentComponent);
 }
 
 function processText(vnode: any, container: any) {
@@ -42,11 +42,11 @@ function processText(vnode: any, container: any) {
   container.append(textNode);
 }
 
-function processElement(vnode: any, container: any) {
-  mountElement(vnode, container);
+function processElement(vnode: any, container: any,parentComponent:any) {
+  mountElement(vnode, container,parentComponent);
 }
 
-function mountElement(vnode: any, container: any) {
+function mountElement(vnode: any, container: any, parentComponent: any) {
   const el = (vnode.el = document.createElement(vnode.type));
 
   const { children, shapeFlag } = vnode;
@@ -56,7 +56,7 @@ function mountElement(vnode: any, container: any) {
     el.textContent = children;
   } else if (ShapeFlags.ARRAY_CHILDREN) {
     // array_children
-    mountChildren(children, el);
+    mountChildren(children, el, parentComponent);
   }
 
   // props
@@ -75,32 +75,36 @@ function mountElement(vnode: any, container: any) {
   container.append(el);
 }
 
-function mountChildren(vnode: any, container: any) {
+function mountChildren(vnode: any, container: any, parentComponent: any) {
   vnode.forEach((child) => {
-    patch(child, container);
+    patch(child, container, parentComponent);
   });
 }
 
-function processComponent(vnode: any, container: any) {
-  mountComponent(vnode, container);
+function processComponent(vnode: any, container: any, parentComponent: any) {
+  mountComponent(vnode, container, parentComponent);
 }
 
 // 挂载节点
-function mountComponent(initialVnode: any, container: any) {
+function mountComponent(
+  initialVnode: any,
+  container: any,
+  parentComponent: any
+) {
   // 创建实例对象
-  const instance = createComponentInstance(initialVnode);
+  const instance = createComponentInstance(initialVnode, parentComponent);
   setupComponent(instance);
   setupRenderEffect(instance, initialVnode, container);
 }
 
-function setupRenderEffect(instance: any, initialVnode: any, container: any) {
+function setupRenderEffect(instance: any, initialVnode: any, container: any,) {
   const { proxy } = instance;
   const subTree = instance.render.call(proxy);
 
   // vnode -> patch
   // vnode -> element -> mountElement
 
-  patch(subTree, container);
+  patch(subTree, container,instance);
 
   // element -> mount
   initialVnode.el = subTree.el;
