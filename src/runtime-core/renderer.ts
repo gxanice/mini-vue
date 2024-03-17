@@ -1,20 +1,25 @@
 import { createComponentInstance, setupComponent } from "./component";
 import { ShapeFlags } from "../shared/ShapeFlags";
 import { Fragment, Text } from "./vnode";
+import { createAppAPI } from "./createApp";
 
 export function createRender(options: any) {
   // 结构出来用户传入的渲染函数
-  const { createElement, patchProp, insert } = options;
+  const {
+    createElement: hostCreateElement,
+    patchProp: hostPatchProp,
+    insert: hostInsert,
+  } = options;
 
   function render(vnode: any, container: any) {
     patch(vnode, container, null);
   }
 
   function patch(vnode: any, container: any, parentComponent: any) {
-    // debugger
     // 处理组件
     // 标识判断是什么类型的节点
     // Fragment 只渲染children
+
     const { type, shapeFlag } = vnode;
 
     switch (type) {
@@ -36,8 +41,7 @@ export function createRender(options: any) {
   }
 
   function processFragment(vnode: any, container: any, parentComponent: any) {
-    const { children } = vnode;
-    mountChildren(children, container, parentComponent);
+    mountChildren(vnode, container, parentComponent);
   }
 
   function processText(vnode: any, container: any) {
@@ -52,7 +56,7 @@ export function createRender(options: any) {
 
   function mountElement(vnode: any, container: any, parentComponent: any) {
     // 不管是dom还是canvas，都应该正确创建
-    const el = (vnode.el = createElement(vnode.type));
+    const el = (vnode.el = hostCreateElement(vnode.type));
 
     const { children, shapeFlag } = vnode;
     // 传来的可能是数组
@@ -61,33 +65,26 @@ export function createRender(options: any) {
       el.textContent = children;
     } else if (ShapeFlags.ARRAY_CHILDREN) {
       // array_children
-      mountChildren(children, el, parentComponent);
+      mountChildren(vnode, el, parentComponent);
     }
 
     // props
     const { props } = vnode;
     for (let key in props) {
       const val = props[key];
-      // 判断是否是事件
-      // const isOn = (key: string) => /^on[A-Z]/.test(key);
-      // if (isOn(key)) {
-      //   const event = key.slice(2).toLowerCase();
-      //   el.addEventListener(event, val);
-      // }
-      // el.setAttribute(key, val);
 
       // 处理属性
-      patchProp(el, key, val);
+      hostPatchProp(el, key, val);
 
       // 添加
-      insert(el, container);
+      hostInsert(el, container);
     }
 
     container.append(el);
   }
 
   function mountChildren(vnode: any, container: any, parentComponent: any) {
-    vnode.forEach((child) => {
+    vnode.children.forEach((child) => {
       patch(child, container, parentComponent);
     });
   }
@@ -120,4 +117,8 @@ export function createRender(options: any) {
     // element -> mount
     initialVnode.el = subTree.el;
   }
+
+  return {
+    createApp: createAppAPI(render),
+  };
 }

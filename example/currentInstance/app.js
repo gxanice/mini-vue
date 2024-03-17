@@ -1,4 +1,4 @@
-import { h,get } from "../../lib/mini-vue.esm.js";
+import { h, getCurrentInstance } from "../../lib/mini-vue.esm.js";
 import { Foo } from "./foo.js";
 
 
