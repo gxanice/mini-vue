@@ -3,6 +3,7 @@ import { initProps } from "./componentProps";
 import { initSlots } from "./componentSlots";
 import { shallowReadonly } from "../reactivity/reactive";
 import { emit } from "./componentEmit";
+import { proxyRefs } from "../reactivity/ref";
 
 // 创建组件实例
 export function createComponentInstance(vnode: any, parent: any) {
@@ -15,6 +16,8 @@ export function createComponentInstance(vnode: any, parent: any) {
     slots: {}, // 组件的插槽
     provides: parent ? parent.provides : {}, // 组件提供的数据
     parent,
+    isMounted: false, //判断是不是初始化
+    subTree: {}, // 子树
     emit: () => {}, // 传递的函数
   };
 
@@ -64,7 +67,7 @@ function handleSetupResult(instance: any, setupResult: any) {
   // 判断setup函数的返回结果类型
   if (typeof setupResult === "object") {
     // 如果返回的是一个对象，则将该对象作为组件的状态保存到实例中
-    instance.setupState = setupResult;
+    instance.setupState = proxyRefs(setupResult);
   }
 
   // 完成组件的设置过程，包括确定组件的render函数
