@@ -7,7 +7,7 @@ import { EMPTY_OBJ } from "../shared";
 
 export function createRenderer(options: any) {
   // 结构出来用户传入的渲染函数
-  const { createElement, patchProp, insert } = options;
+  const { createElement, patchProp, insert, remove, setElementText } = options;
 
   function render(vnode: any, container: any) {
     patch(null, vnode, container, null);
@@ -40,7 +40,7 @@ export function createRenderer(options: any) {
   }
 
   function processFragment(n1, n2: any, container: any, parentComponent: any) {
-    mountChildren(n2, container, parentComponent);
+    mountChildren(n2.children, container, parentComponent);
   }
 
   function processText(n1, n2: any, container: any) {
@@ -53,17 +53,61 @@ export function createRenderer(options: any) {
     if (!n1) {
       mountElement(n2, container, parentComponent);
     } else {
-      patchElement(n1, n2, container);
+      patchElement(n1, n2, container, parentComponent);
     }
   }
 
-  function patchElement(n1, n2: any, container: any) {
+  function patchElement(n1, n2: any, container: any, parentComponent) {
     // 获取新旧props
     const oldProps = n1.props || EMPTY_OBJ;
     const newProps = n2.props || EMPTY_OBJ;
     // 获取el
     const el = (n2.el = n1.el);
+    // 更新children
+    patchChildren(n1, n2, el, parentComponent);
+    // 更新props
     patchProps(el, oldProps, newProps);
+  }
+
+  function patchChildren(n1: any, n2: any, container: any, parentComponent) {
+    const { children: c1, shapeFlag: prevShapeFlag } = n1;
+    const { shapeFlag, children: c2 } = n2;
+
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      // if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      //   // 1.把老的children清空
+      //   unmountChildren(n1);
+      //   // 2.设置新的text
+      //   setElementText(container, children);
+      // } else {
+      //   // 新旧节点都是text，不相同时直接改变
+      //   if(c1 !== children) {
+      //     setElementText(container, children);
+      //   }
+      // }
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(n1);
+      }
+      // 无论是新旧节点都是text还是text与数组对比，都是不相同时直接改变
+      if (c1 !== c2) {
+        setElementText(container, c2);
+      }
+    } else {
+      if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        // 原本是Text，新的是数组
+        setElementText(container, "");
+        mountChildren(c2, container, parentComponent);
+      } else {
+        // 原本是数组，新的也是数组,需要使用diff算法
+
+      }
+    }
+  }
+
+  function unmountChildren(vnode: any) {
+    vnode.children.forEach((child) => {
+      remove(child.el);
+    });
   }
 
   function patchProps(el, oldProps, newProps) {
@@ -101,7 +145,7 @@ export function createRenderer(options: any) {
       el.textContent = children;
     } else if (ShapeFlags.ARRAY_CHILDREN) {
       // array_children
-      mountChildren(vnode, el, parentComponent);
+      mountChildren(children, el, parentComponent);
     }
 
     // props
@@ -119,8 +163,8 @@ export function createRenderer(options: any) {
     container.append(el);
   }
 
-  function mountChildren(vnode: any, container: any, parentComponent: any) {
-    vnode.children.forEach((child) => {
+  function mountChildren(children: any, container: any, parentComponent: any) {
+    children.forEach((child) => {
       patch(null, child, container, parentComponent);
     });
   }
