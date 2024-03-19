@@ -1,5 +1,7 @@
 export const extend = Object.assign;
 
+export const EMPTY_OBJ = {};
+
 // 判断是否为对象
 export const isObject = (val: any) => {
   return val !== null && typeof val === "object";
@@ -19,7 +21,7 @@ export const hasOwn = (target: any, key: any) => {
 
 // 将时间转化为大写的绑定事件形式
 export const toHandlerKey = (str: string) => {
-  return str ? 'on' + capitalioze(str) : "";
+  return str ? "on" + capitalioze(str) : "";
 };
 
 const capitalioze = (str: string) => {
@@ -28,7 +30,7 @@ const capitalioze = (str: string) => {
 
 // 将驼峰形式转化为绑定事件的形式
 export const camelize = (str: any) => {
-  return str.replace(/-(\w)/, (_:string, c: string) => {
+  return str.replace(/-(\w)/, (_: string, c: string) => {
     return c ? c.toUpperCase() : "";
   });
 };

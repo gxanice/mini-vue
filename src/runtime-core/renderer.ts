@@ -3,13 +3,14 @@ import { ShapeFlags } from "../shared/ShapeFlags";
 import { Fragment, Text } from "./vnode";
 import { createAppAPI } from "./createApp";
 import { effect } from "../reactivity";
+import { EMPTY_OBJ } from "../shared";
 
 export function createRenderer(options: any) {
   // 结构出来用户传入的渲染函数
-  const { createElement, patchProps, insert } = options;
+  const { createElement, patchProp, insert } = options;
 
   function render(vnode: any, container: any) {
-    patch(null,vnode, container, null);
+    patch(null, vnode, container, null);
   }
 
   // n1: 旧的虚拟节点，n2: 新的虚拟节点
@@ -50,15 +51,39 @@ export function createRenderer(options: any) {
 
   function processElement(n1, n2: any, container: any, parentComponent: any) {
     if (!n1) {
-       mountElement(n2, container, parentComponent);
+      mountElement(n2, container, parentComponent);
     } else {
       patchElement(n1, n2, container);
     }
-   
   }
 
-  function patchElement(n1, n2: any, container: any) { 
-    
+  function patchElement(n1, n2: any, container: any) {
+    // 获取新旧props
+    const oldProps = n1.props || EMPTY_OBJ;
+    const newProps = n2.props || EMPTY_OBJ;
+    // 获取el
+    const el = (n2.el = n1.el);
+    patchProps(el, oldProps, newProps);
+  }
+
+  function patchProps(el, oldProps, newProps) {
+    if (newProps === oldProps) return;
+    for (const key in newProps) {
+      const prev = oldProps[key];
+      const next = newProps[key];
+
+      if (prev !== next) {
+        patchProp(el, key, prev, next);
+      }
+    }
+
+    if (oldProps !== EMPTY_OBJ) {
+      for (const key in oldProps) {
+        if (!(key in newProps)) {
+          patchProp(el, key, oldProps[key], null);
+        }
+      }
+    }
   }
 
   function processComponent(n1, n2: any, container: any, parentComponent: any) {
@@ -85,7 +110,7 @@ export function createRenderer(options: any) {
       const val = props[key];
 
       // 处理属性
-      patchProps(el, key, val);
+      patchProp(el, key, null, val);
 
       // 添加
       insert(el, container);
@@ -96,7 +121,7 @@ export function createRenderer(options: any) {
 
   function mountChildren(vnode: any, container: any, parentComponent: any) {
     vnode.children.forEach((child) => {
-      patch(null,child, container, parentComponent);
+      patch(null, child, container, parentComponent);
     });
   }
 
@@ -126,7 +151,7 @@ export function createRenderer(options: any) {
         // vnode -> patch
         // vnode -> element -> mountElement
 
-        patch(null,subTree, container, instance);
+        patch(null, subTree, container, instance);
 
         // element -> mount
         initialVnode.el = subTree.el;
@@ -139,7 +164,7 @@ export function createRenderer(options: any) {
         // 获取上一次的虚拟节点树
         const prevsubTree = instance.subTree;
         instance.subTree = subTree;
-        patch(prevsubTree,subTree, container, instance);
+        patch(prevsubTree, subTree, container, instance);
       }
     });
   }
