@@ -4,6 +4,7 @@ import { Fragment, Text } from "./vnode";
 import { createAppAPI } from "./createApp";
 import { effect } from "../reactivity";
 import { EMPTY_OBJ } from "../shared";
+import { shouldUpdateComponent } from "./componentUpdateUtils";
 
 export function createRenderer(options: any) {
   // 结构出来用户传入的渲染函数
@@ -313,7 +314,39 @@ export function createRenderer(options: any) {
     parentComponent: any,
     anchor: any
   ) {
-    mountComponent(n2, container, parentComponent, anchor);
+    if (!n1) {
+      mountComponent(n2, container, parentComponent, anchor);
+    } else {
+      updateComponent(n1, n2);
+    }
+  }
+
+  function updateComponent(n1: any, n2: any) {
+    const instance = (n2.component = n1.component);
+
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2;
+      instance.update();
+    } else {
+      n2.el = n1.el;
+      n2.vnode = n2;
+    }
+  }
+
+  // 挂载节点
+  function mountComponent(
+    initialVnode: any,
+    container: any,
+    parentComponent: any,
+    anchor: any
+  ) {
+    // 创建实例对象
+    const instance = (initialVnode.component = createComponentInstance(
+      initialVnode,
+      parentComponent
+    ));
+    setupComponent(instance);
+    setupRenderEffect(instance, initialVnode, container, anchor);
   }
 
   function mountElement(
@@ -358,34 +391,18 @@ export function createRenderer(options: any) {
     });
   }
 
-  // 挂载节点
-  function mountComponent(
-    initialVnode: any,
-    container: any,
-    parentComponent: any,
-    anchor: any
-  ) {
-    // 创建实例对象
-    const instance = createComponentInstance(initialVnode, parentComponent);
-    setupComponent(instance);
-    setupRenderEffect(instance, initialVnode, container, anchor);
-  }
-
   function setupRenderEffect(
     instance: any,
     initialVnode: any,
     container: any,
     anchor: any
   ) {
-    effect(() => {
+    instance.update = effect(() => {
       // 判断是更新还是初始化
       if (!instance.isMounted) {
-        console.log("init");
         const { proxy } = instance;
         // 存储上一次的虚拟节点树
         const subTree = (instance.subTree = instance.render.call(proxy));
-
-        console.log(subTree);
 
         // vnode -> patch
         // vnode -> element -> mountElement
@@ -397,7 +414,13 @@ export function createRenderer(options: any) {
 
         instance.isMounted = true;
       } else {
-        console.log("update");
+        // 需要更新前的vnode
+        const { next, vnode } = instance;
+        if (next) {
+          next.el = vnode.el;
+          updateComponentPreRender(instance, next);
+        }
+
         const { proxy } = instance;
         const subTree = instance.render.call(proxy);
         // 获取上一次的虚拟节点树
@@ -411,6 +434,13 @@ export function createRenderer(options: any) {
   return {
     createApp: createAppAPI(render),
   };
+}
+
+function updateComponentPreRender(instance: any, nextVnode: any) {
+  // 更新实例对象上的props与虚拟节点
+  instance.vnode = nextVnode;
+  instance.next = null;
+  instance.props = nextVnode.props;
 }
 
 // 最长递增子序列

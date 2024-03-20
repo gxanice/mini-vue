@@ -3,6 +3,7 @@ import { hasOwn } from "../shared/index";
 const publicPropertiesMap = {
   $el: (i) => i.vnode.el, // 获取组件的根DOM元素
   $slots: (i) => i.slots, // 获取组件的插槽
+  $props: (i) => i.props, // 获取组件的props
 };
 
 export const pubilcInstanceProxyHandlers = {

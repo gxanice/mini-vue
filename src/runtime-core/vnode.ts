@@ -1,13 +1,14 @@
 import { ShapeFlags } from "../shared/ShapeFlags";
 
-export const Fragment = Symbol("Fragment")
-export const Text = Symbol("Text")
+export const Fragment = Symbol("Fragment");
+export const Text = Symbol("Text");
 
 export function createVNode(type: any, props?: any, children?: any) {
   const vnode = {
     type,
     props,
     children,
+    component: null, // 组件实例
     shapeFlag: getShapeFlag(type), // 通过type类型来判断是什么类型的节点
     key: (props && props.key) || null, // key
     el: null,
@@ -21,18 +22,17 @@ export function createVNode(type: any, props?: any, children?: any) {
   }
 
   // 是组件并且children是对象
-  if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) { 
-    if(typeof children === 'object') {
-      vnode.shapeFlag |= ShapeFlags.SLOT_CHILDREN
+  if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+    if (typeof children === "object") {
+      vnode.shapeFlag |= ShapeFlags.SLOT_CHILDREN;
     }
   }
 
   return vnode;
 }
 
-
 export function createTextNode(text: string) {
-  return createVNode(Text, {}, text)
+  return createVNode(Text, {}, text);
 }
 
 function getShapeFlag(type: any) {

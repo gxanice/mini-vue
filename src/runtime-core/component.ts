@@ -10,6 +10,7 @@ export function createComponentInstance(vnode: any, parent: any) {
   // 根据虚拟节点（vnode）创建一个组件实例对象
   const component = {
     vnode, // 组件的虚拟节点
+    next: null, // 下一个要更新的节点
     type: vnode.type, // 组件的类型（可以是组件选项对象）
     setupState: {},
     props: {}, // 组件的props
