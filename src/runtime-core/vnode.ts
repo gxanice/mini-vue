@@ -9,6 +9,7 @@ export function createVNode(type: any, props?: any, children?: any) {
     props,
     children,
     shapeFlag: getShapeFlag(type), // 通过type类型来判断是什么类型的节点
+    key: (props && props.key) || null, // key
     el: null,
   };
 
