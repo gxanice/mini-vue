@@ -25,7 +25,7 @@ function parseInterpolation(context: any) {
   const openDelimiterLength = openDelimiter.length;
   const closeDelimiterLength = closeDelimiter.length;
 
-  const closeIndex = context.content.indexOf(
+  const closeIndex = context.source.indexOf(
     closeDelimiter,
     openDelimiterLength
   );
@@ -39,19 +39,17 @@ function parseInterpolation(context: any) {
   advanceBy(context, rawContentLength + closeDelimiterLength);
   console.log("context.source", context.source);
 
-  return [
-    {
-      type: NodeTypes.INTERPOLATION,
-      content: {
-        type: NodeTypes.SIMPLE_EXPRESSION,
-        content: content,
-      },
+  return {
+    type: NodeTypes.INTERPOLATION,
+    content: {
+      type: NodeTypes.SIMPLE_EXPRESSION,
+      content: content,
     },
-  ];
+  };
 }
 
 function advanceBy(context: any, length: number) {
-  context.source = context.content.slice(length);
+  context.source = context.source.slice(length);
 }
 
 function createRoot(children: any[]) {
