@@ -1,6 +1,5 @@
-import { reactive } from "../reactive";
-import { effect, stop } from "../effect";
-import { vi } from "vitest";
+import { reactive } from "../src/reactive";
+import { effect, stop } from "../src/effect";
 
 describe("effect", () => {
   it("happy path", () => {
@@ -42,7 +41,7 @@ describe("effect", () => {
     // 4.如果当执行runner时，会再次执行fn
     let dummy;
     let run: any;
-    const scheduler = vi.fn(() => {
+    const scheduler = jest.fn(() => {
       run = runner;
     });
     const obj = reactive({ foo: 1 });
@@ -83,7 +82,7 @@ describe("effect", () => {
 
   it("onStop", () => {
     const obj = reactive({ foo: 1 });
-    const onStop = vi.fn();
+    const onStop = jest.fn();
     let dummy;
     const runner = effect(
       () => {

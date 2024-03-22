@@ -1,5 +1,4 @@
-import { isReadonly, shallowReadonly } from "../reactive";
-import { vi } from "vitest";
+import { isReadonly, shallowReadonly } from "../src/reactive";
 
 describe("shallowReadonly", () => {
   // 测试shallowReadonly(只能使内部的第一层变为响应式)
@@ -11,7 +10,7 @@ describe("shallowReadonly", () => {
 
   // set失败,因为target是readonly
   it("warn then call set", () => {
-    console.warn = vi.fn();
+    console.warn = jest.fn();
 
     const user = shallowReadonly({
       age: 10,
