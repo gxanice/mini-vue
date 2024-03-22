@@ -5,6 +5,7 @@ import { createAppAPI } from "./createApp";
 import { effect } from "../reactivity";
 import { EMPTY_OBJ } from "../shared";
 import { shouldUpdateComponent } from "./componentUpdateUtils";
+import { queueJobs } from "./scheduler";
 
 export function createRenderer(options: any) {
   // 结构出来用户传入的渲染函数
@@ -397,38 +398,45 @@ export function createRenderer(options: any) {
     container: any,
     anchor: any
   ) {
-    instance.update = effect(() => {
-      // 判断是更新还是初始化
-      if (!instance.isMounted) {
-        const { proxy } = instance;
-        // 存储上一次的虚拟节点树
-        const subTree = (instance.subTree = instance.render.call(proxy));
+    instance.update = effect(
+      () => {
+        // 判断是更新还是初始化
+        if (!instance.isMounted) {
+          const { proxy } = instance;
+          // 存储上一次的虚拟节点树
+          const subTree = (instance.subTree = instance.render.call(proxy));
 
-        // vnode -> patch
-        // vnode -> element -> mountElement
+          // vnode -> patch
+          // vnode -> element -> mountElement
 
-        patch(null, subTree, container, instance, anchor);
+          patch(null, subTree, container, instance, anchor);
 
-        // element -> mount
-        initialVnode.el = subTree.el;
+          // element -> mount
+          initialVnode.el = subTree.el;
 
-        instance.isMounted = true;
-      } else {
-        // 需要更新前的vnode
-        const { next, vnode } = instance;
-        if (next) {
-          next.el = vnode.el;
-          updateComponentPreRender(instance, next);
+          instance.isMounted = true;
+        } else {
+          // 需要更新前的vnode
+          const { next, vnode } = instance;
+          if (next) {
+            next.el = vnode.el;
+            updateComponentPreRender(instance, next);
+          }
+
+          const { proxy } = instance;
+          const subTree = instance.render.call(proxy);
+          // 获取上一次的虚拟节点树
+          const prevsubTree = instance.subTree;
+          instance.subTree = subTree;
+          patch(prevsubTree, subTree, container, instance, anchor);
         }
-
-        const { proxy } = instance;
-        const subTree = instance.render.call(proxy);
-        // 获取上一次的虚拟节点树
-        const prevsubTree = instance.subTree;
-        instance.subTree = subTree;
-        patch(prevsubTree, subTree, container, instance, anchor);
+      },
+      {
+        scheduler() {
+          queueJobs(instance.update);
+        },
       }
-    });
+    );
   }
 
   return {
