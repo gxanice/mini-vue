@@ -10,39 +10,68 @@ export function baseParse(content: string) {
   // 创建解析上下文
   const context = createParserContext(content);
   // 解析子节点，并创建一个根节点
-  return createRoot(parseChildren(context));
+  return createRoot(parseChildren(context, []));
 }
 
 // parseChildren 函数负责解析所有子节点
-function parseChildren(context: any) {
+function parseChildren(context: any, ancestors: any) {
   // 初始化节点数组
   const nodes: any = [];
 
-  let node: any;
-  let s = context.source;
-  // 如果当前上下文的源码以 "{{" 开始，则解析为插值表达式
-  if (s.startsWith("{{")) {
-    node = parseInterpolation(context);
-  } else if (s[0] === "<") {
-    if (/[a-z]/i.test(s[1])) {
-      node = parseElement(context);
+  while (!isEnd(context, ancestors)) {
+    let node: any;
+    let s = context.source;
+    // 如果当前上下文的源码以 "{{" 开始，则解析为插值表达式
+    if (s.startsWith("{{")) {
+      node = parseInterpolation(context);
+    } else if (s[0] === "<") {
+      if (/[a-z]/i.test(s[1])) {
+        node = parseElement(context, ancestors);
+      }
+    } else {
+      node = parseText(context);
     }
-  } else {
-    node = parseText(context);
-  }
 
-  // 将解析得到的节点添加到节点数组中
-  nodes.push(node);
+    // 将解析得到的节点添加到节点数组中
+    nodes.push(node);
+  }
 
   return nodes;
 }
 
+function isEnd(context: any, ancestors: any) {
+  let s = context.source;
+  // 遇到结束标签
+  if (s.startsWith("</")) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const tag = ancestors[i].tag;
+      if (startsWithEndTagOpen(s, tag)) {
+        return true;
+      }
+    }
+  }
+
+  // source 有值
+  return !s;
+}
+
 function parseText(context: any) {
-  let content = parseTextData(context, context.source.length);
+  let endIndex = context.source.length;
+  let endTokens = ["{{", "<"];
+
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i]);
+    if (index !== -1 && endIndex > index) {
+      endIndex = index;
+    }
+  }
+
+  // 获取content
+  const content = parseTextData(context, endIndex);
 
   return {
     type: NodeTypes.TEXT,
-    tag: content,
+    content: content,
   };
 }
 
@@ -53,12 +82,28 @@ function parseTextData(context: any, length: number) {
   return content;
 }
 
-function parseElement(context: any) {
-  const element = parseTag(context, TagType.START);
-  parseTag(context, TagType.END);
+function parseElement(context: any, ancestors: any) {
+  const element: any = parseTag(context, TagType.START);
+  ancestors.push(element);
+
+  element.children = parseChildren(context, ancestors);
+  ancestors.pop();
+  // 解析结束标签
+  if (startsWithEndTagOpen(context.source, element.tag)) {
+    parseTag(context, TagType.END);
+  } else {
+    throw new Error(`缺少结束标签:${element.tag}}`);
+  }
 
   // 解析tag
   return element;
+}
+
+function startsWithEndTagOpen(source: any, tag: any) {
+  return (
+    source.startsWith("</") &&
+    source.slice(2, 2 + tag.length).toLowerCase() === tag.toLowerCase()
+  );
 }
 
 function parseTag(context: any, type: any) {
