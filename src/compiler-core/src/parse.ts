@@ -1,8 +1,8 @@
-import { NodeTypes } from './ast';
+import { NodeTypes } from "./ast";
 
 const enum TagType {
   START,
-  END
+  END,
 }
 
 // baseParse 函数是解析器的入口点，接收一个模板字符串 content 作为输入
@@ -19,7 +19,7 @@ function parseChildren(context: any) {
   const nodes: any = [];
 
   let node: any;
-  let s = context.source
+  let s = context.source;
   // 如果当前上下文的源码以 "{{" 开始，则解析为插值表达式
   if (s.startsWith("{{")) {
     node = parseInterpolation(context);
@@ -27,6 +27,8 @@ function parseChildren(context: any) {
     if (/[a-z]/i.test(s[1])) {
       node = parseElement(context);
     }
+  } else {
+    node = parseText(context);
   }
 
   // 将解析得到的节点添加到节点数组中
@@ -35,23 +37,38 @@ function parseChildren(context: any) {
   return nodes;
 }
 
+function parseText(context: any) {
+  let content = parseTextData(context, context.source.length);
+
+  return {
+    type: NodeTypes.TEXT,
+    tag: content,
+  };
+}
+
+function parseTextData(context: any, length: number) {
+  let content = context.source.slice(0, length);
+
+  advanceBy(context, length);
+  return content;
+}
+
 function parseElement(context: any) {
   const element = parseTag(context, TagType.START);
   parseTag(context, TagType.END);
 
   // 解析tag
-  return element
+  return element;
 }
 
-
-function parseTag(context: any, type:any) {
+function parseTag(context: any, type: any) {
   const match: any = /^<\/?([a-z]*)/i.exec(context.source);
   const tag = match[1];
   // 删除处理完成的代码
   advanceBy(context, match[0].length);
   advanceBy(context, 1);
 
-  if(type === TagType.END) return
+  if (type === TagType.END) return;
 
   return {
     type: NodeTypes.ELEMENT,
@@ -78,10 +95,10 @@ function parseInterpolation(context: any) {
 
   // 计算插值内容的长度，并提取出来
   const rawContentLength = closeIndex - openDelimiterLength;
-  const content = context.source.slice(0, rawContentLength).trim();
+  const content = parseTextData(context, rawContentLength).trim();
 
   // 前进到插值表达式之后的位置
-  advanceBy(context, rawContentLength + closeDelimiterLength);
+  advanceBy(context, closeDelimiterLength);
 
   // 返回一个表示插值表达式的节点对象
   return {
@@ -111,4 +128,3 @@ function createParserContext(content: string) {
     source: content,
   };
 }
-
