@@ -1,12 +1,18 @@
 import { NodeTypes } from "./ast";
 
-export function transform(root: any, options?: any) {
+export function transform(root: any, options: any = {}) {
   // 创建上下文对象
   const context = createTransformContext(root, options);
   // 深度优先搜索dps
   traverseNode(root, context);
-  // 修改 text content
+
+  createRootCodegen(root);
 }
+
+function createRootCodegen(root: any) {
+  root.codegenNode = root.children[0]
+}
+
 
 function createTransformContext(root: any, options: any) {
   const context = {
