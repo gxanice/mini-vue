@@ -32,7 +32,7 @@ function traverseNode(node: any, context: any) {
   const nodeTransforms = context.nodeTransforms;
   for (let i = 0; i < nodeTransforms.length; i++) {
     const transform = nodeTransforms[i];
-    transform(node);
+    transform(node,context);
   }
 
   // 判断是否是插值
@@ -40,10 +40,8 @@ function traverseNode(node: any, context: any) {
     case NodeTypes.INTERPOLATION:
       context.helper(TO_DISPLAY_STRING);
       break;
-    case NodeTypes.ELEMENT:
-      traverseChildren(node, context);
-      break;
     case NodeTypes.ROOT:
+    case NodeTypes.ELEMENT:
       traverseChildren(node, context);
       break;
     default:

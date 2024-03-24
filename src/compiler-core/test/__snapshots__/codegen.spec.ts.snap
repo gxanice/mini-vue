@@ -1,5 +1,10 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`interpolation module > element 1`] = `
+"const {createElementVnode:_createElementVnode} = Vue
+return function render(_ctx,_cache,$props,$setup,$data,$options){return _createElementVnode("div")}"
+`;
+
 exports[`interpolation module > interpolation 1`] = `
 "const {toDisplayString:_toDisplayString} = Vue
 return function render(_ctx,_cache,$props,$setup,$data,$options){return _toDisplayString(_ctx.message)}"
