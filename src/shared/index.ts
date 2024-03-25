@@ -1,3 +1,5 @@
+export * from "./toDisplayString";
+
 export const extend = Object.assign;
 
 export const EMPTY_OBJ = {};
@@ -10,7 +12,7 @@ export const isObject = (val: any) => {
 // 判断是否是字符串
 export const isString = (val: any) => {
   return typeof val === "string";
-}
+};
 
 // 判断对象是否相等
 export const hasChange = (val: any, newVal: any) => {

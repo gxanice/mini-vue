@@ -79,8 +79,12 @@ function handleSetupResult(instance: any, setupResult: any) {
 function finishComponentSetup(instance: any) {
   const component = instance.type; // 获取组件选项对象
 
-  // 如果组件选项中提供了render函数，则将其赋值给实例的render属性
-  // 这样，后续渲染过程中就可以调用这个render函数来生成虚拟DOM
+  if (compiler && !component.render) {
+    if (component.template) {
+      component.render = compiler(component.template)
+    }
+  }
+
   instance.render = component.render;
 }
 
@@ -91,4 +95,10 @@ export function getCurrentInstance() {
 
 export function setCurrentInstance(instance: any) {
   currentInstance = instance;
+}
+
+let compiler
+
+export function registerRuntimeCompiler(_compiler) {
+  compiler = _compiler
 }

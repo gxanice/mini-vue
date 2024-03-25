@@ -404,7 +404,10 @@ export function createRenderer(options: any) {
         if (!instance.isMounted) {
           const { proxy } = instance;
           // 存储上一次的虚拟节点树
-          const subTree = (instance.subTree = instance.render.call(proxy));
+          const subTree = (instance.subTree = instance.render.call(
+            proxy,
+            proxy
+          ));
 
           // vnode -> patch
           // vnode -> element -> mountElement
@@ -424,7 +427,7 @@ export function createRenderer(options: any) {
           }
 
           const { proxy } = instance;
-          const subTree = instance.render.call(proxy);
+          const subTree = instance.render.call(proxy, proxy);
           // 获取上一次的虚拟节点树
           const prevsubTree = instance.subTree;
           instance.subTree = subTree;
