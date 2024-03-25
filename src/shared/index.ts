@@ -7,6 +7,11 @@ export const isObject = (val: any) => {
   return val !== null && typeof val === "object";
 };
 
+// 判断是否是字符串
+export const isString = (val: any) => {
+  return typeof val === "string";
+}
+
 // 判断对象是否相等
 export const hasChange = (val: any, newVal: any) => {
   // Object.is() 方法判断两个值是否是相同的值
